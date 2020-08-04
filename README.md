@@ -8,3 +8,5 @@ Fill in the details about your project
 Make sure the project is built so the script has access to the Assembly
 
 Run!
+
+Files are output into the project and directory of choice - one model per file
