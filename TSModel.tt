@@ -1,0 +1,157 @@
+﻿<#@ template debug="false" hostspecific="true" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Reflection" #>
+<#@ import namespace="System.IO" #>
+<#@ assembly name="$(ProjectDir)$(OutDir)$(TargetFileName)" #>
+<#@ output extension="\n" #>
+The above line prevents T4 from outputting a file - that is controlled in here with manual file writing
+	/*
+	*
+	* Add details of project and assembly below:
+	* This file needs to be in the same project as the Assembly you are using
+	* Build the project before running this so the latest assembly is built
+	*
+	*/
+<#
+	// The namespace containing the classes to convert to TS
+	string nameSpaceToConvert = "My.Project.Models.DTOs";
+	// The name of the project in the solution to output models
+    string targetProject = "Client";
+	// The folder in the solution to output the models
+	// This is defaulted for a hypothetical Angular project
+    string targetFolder = @"src\app\model";
+
+	// Below Used to generate the FQ Assembly name
+	string assemblyName = "My.Project";
+
+	string assemblyVersion = "1.0.0.0";
+	string culture= "neutral";
+	string publicToken = "null";
+#>
+	/*
+	*
+	* Stop editing here 
+	*
+	*/
+<#
+	string outputDir = Path.Combine(this.Host.ResolveAssemblyReference("$(SolutionDir)"), targetProject, targetFolder);
+
+	string fqAssemblyName = assemblyName + ", Version="+assemblyVersion+", Culture="+culture+", PublicKeyToken=" + publicToken;
+	Assembly assembly = Assembly.Load(fqAssemblyName);
+
+	var types = new List<System.Type>(assembly.GetTypes());
+	var filteredTypes = types.Where(t => t.Namespace == nameSpaceToConvert).ToList();
+	
+	foreach (var type in filteredTypes)
+	{
+        var sb = new StringBuilder();
+        var fields = new List<PropertyInfo>(type.GetProperties(BindingFlags.Public|BindingFlags.Instance));
+		var importTypes = new List<string>();
+
+        sb.Append(Environment.NewLine + "export class " + type.Name + Environment.NewLine + " {" + Environment.NewLine);
+
+		foreach (var field in fields)
+		{
+            sb.Append("\t" + CSpropToTS(field, filteredTypes, importTypes) + Environment.NewLine);
+		}
+        sb.Append("}");
+
+		// The generation process adds to the list the referenced types from the namespace and adds imports for them
+		foreach (var import in importTypes)
+        {
+            sb.Insert(0, "import { " + import + " } from './" + import + "';" + Environment.NewLine);
+        }
+
+        SaveFile(outputDir, type.Name + ".ts", sb.ToString());
+	}
+
+#>
+
+<#+
+			static string CSpropToTS(PropertyInfo field, IEnumerable<System.Type> filteredTypes, List<string> importTypes) 
+			{
+				bool isArrayType = false;
+				string tsType = "any";
+				if (field.PropertyType.Name == "IEnumerable`1")
+				{
+					isArrayType = true;
+
+				}
+				tsType = CsTypeToTS(field.PropertyType, filteredTypes, isArrayType, importTypes);
+				return field.Name + ": " + tsType + ";";
+			}
+
+			static string CsTypeToTS(Type type, IEnumerable<System.Type> filteredTypes, bool arrayType, List<string> importTypes)
+			{
+				if (arrayType)
+				{
+					type = type.GetGenericArguments()[0];
+				}
+				
+				string tsType = "any";
+				string typeAppend = "";
+				// If the referenced type is a class from the namespace we're searching, use that name
+				if (filteredTypes.Contains(type))
+				{
+					tsType = type.Name;
+					importTypes.Add(type.Name);
+				}
+				// Otherwise convert C# type names to TS type names
+				else
+				{
+					var typeName = type.Name;
+					if (type.Name == "Nullable`1")
+					{
+						typeAppend = " | null";
+						typeName = System.Nullable.GetUnderlyingType(type).Name;
+					}
+					switch (typeName)
+					{
+						case nameof(Single):
+						case nameof(Double):
+						case nameof(Decimal):
+						case nameof(Byte):
+						case nameof(SByte):
+						case nameof(UInt16):
+						case nameof(Int16):
+						case nameof(UInt32):
+						case nameof(Int32):
+						case nameof(Int64):
+						case nameof(UInt64):
+							tsType = "number";
+							break;
+						case nameof(DateTime):
+						case nameof(DateTimeOffset):
+							tsType = "Date";
+							break;
+						case nameof(Boolean):
+							tsType = "boolean";
+							break;
+						case nameof(String):
+							tsType = "string";
+							break;
+					}
+				}
+				if (arrayType)
+				{
+					tsType = "Array<" + tsType + ">";
+				}
+				return tsType + typeAppend;
+			}
+
+			public void SaveFile(string folder, string fileName, string content)
+			{
+				using (FileStream fs = new FileStream(Path.Combine(folder, fileName), FileMode.Create))
+				{  
+					using (StreamWriter str = new StreamWriter(fs))
+					{
+						str.WriteLine(content);
+						str.Flush();
+					}
+				}
+			}
+		
+#>
