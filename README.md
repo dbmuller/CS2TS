@@ -24,7 +24,7 @@ Solution here on SO:
 https://stackoverflow.com/questions/51550265/t4-template-could-not-load-file-or-assembly-system-runtime-version-4-2-0-0
 
 Default location for Visual Studio 2019
-C:\Users\{user}\AppData\Local\Microsoft\VisualStudio\16.0_37dd0e65
+C:\Users\[user]\AppData\Local\Microsoft\VisualStudio\16.0_37dd0e65
 
 Add in
 ```
