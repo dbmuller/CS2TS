@@ -12,9 +12,10 @@ Run!
 Files are output into the project and directory of choice - one model per file
 
 ## Finding the FQ assembly name
-
 ### Powershell
+```
 [System.Reflection.AssemblyName]::GetAssemblyName("Drive:\FullPathToDLL\DLLName.dll").FullName
+```
 
 ### Powershell in VS
 https://stackoverflow.com/a/17396630/3449556
