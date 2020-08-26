@@ -13,6 +13,13 @@ Files are output into the project and directory of choice - one model per file
 
 ## Finding the FQ assembly name
 
+### Powershell
+[System.Reflection.AssemblyName]::GetAssemblyName("Drive:\FullPathToDLL\DLLName.dll").FullName
+
+### Powershell in VS
+https://stackoverflow.com/a/17396630/3449556
+
+### ILDASM
 You can run the developer command prompt, run ILDASM, and inspect the details
 https://docs.microsoft.com/en-us/dotnet/framework/tools/ildasm-exe-il-disassembler
 
