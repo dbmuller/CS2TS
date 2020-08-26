@@ -11,6 +11,11 @@ Run!
 
 Files are output into the project and directory of choice - one model per file
 
+## Finding the FQ assembly name
+
+You can run the developer command prompt, run ILDASM, and inspect the details
+https://docs.microsoft.com/en-us/dotnet/framework/tools/ildasm-exe-il-disassembler
+
 ## Known issues
 
 ### Could not load file or assembly 'System.Runtime, Version = 4.2.0.0'
